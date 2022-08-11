@@ -20,10 +20,12 @@ jobs:
         env:
           CONFIG_FILE: mkdocs.yml
           SITE_NAME: ${{github.repository}} wiki
+          SITE_URL: https://example-published-github-wiki.demeester.app/
           REPO_URL: https://github.com/${{github.repository}}/wiki
         run: |
           touch "$CONFIG_FILE"
           echo "site_name: $SITE_NAME"   >> "$CONFIG_FILE"
+          echo "site_url: $SITE_URL"     >> "$CONFIG_FILE"
           echo "repo_url: $REPO_URL"     >> "$CONFIG_FILE"
           echo "edit_uri: ''"            >> "$CONFIG_FILE"
 
@@ -37,6 +39,8 @@ jobs:
           echo "      glob: "            >> "$CONFIG_FILE"
           echo '        - "_Footer.md"'  >> "$CONFIG_FILE"
           echo '        - "_Sidebar.md"' >> "$CONFIG_FILE"
+          
+          echo "  - search"              >> "$CONFIG_FILE"
       - name: add page title to content
         run: |
           for file in $(find ./docs/ -name '*.md')

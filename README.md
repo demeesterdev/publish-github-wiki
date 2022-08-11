@@ -4,6 +4,9 @@ Proof of concept on how to publish a github wiki to another Azure Static web app
 Usecase is privetly sharing wiki content with a finegrained audience of whom not all have a github account.
 All users have an Azure Active Directory account and an azure subscription is available. 
 
+wiki is available at https://github.com/demeesterdev/publish-github-wiki/wiki.  
+build result can be found at https://example-published-github-wiki.demeester.app/.
+
 ## key-components
 
 - publishing workflow [.github/workflows/azure-static-web-apps-from-wiki.yml](.github/workflows/azure-static-web-apps-from-wiki.yml)
