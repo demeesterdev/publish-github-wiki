@@ -53,7 +53,7 @@ jobs:
             find ./docs/ -maxdepth 1 -iname home.md -exec mv {} ./docs/index.md \;
           fi
       - name: build site
-        run: makedocs build
+        run: mkdocs build
         
         
       
