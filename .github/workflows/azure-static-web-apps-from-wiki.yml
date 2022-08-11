@@ -1,6 +1,6 @@
-name: Azure Static Web Apps CI/CD
+name: PUblish Wiki to Azure Static Web App
 
-on:
+on: 
   gollum
 
 jobs:
@@ -54,7 +54,11 @@ jobs:
           fi
       - name: build site
         run: mkdocs build
-        
+      
+      - name: write statice web app config
+        run: echo "TODO: implement writing of config"
+      - name: deploy to static web app
+        run: echo "TODO: implement deploy to static web app"
         
       
 #      - name: Build And Deploy
