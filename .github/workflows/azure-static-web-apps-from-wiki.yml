@@ -56,9 +56,8 @@ jobs:
         run: mkdocs build
       
       - name: write statice web app config
-        run: echo "TODO: implement writing of config"
-      - name: deploy to static web app
-        run: echo "TODO: implement deploy to static web app"
+        run: |
+          echo "TODO: implement writing of config for static web app"
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
