@@ -1,4 +1,4 @@
-name: PUblish Wiki to Azure Static Web App
+name: Publish Wiki to Azure Static Web App
 
 on: 
   gollum
