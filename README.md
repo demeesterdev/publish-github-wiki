@@ -10,8 +10,10 @@ All users have an Azure Active Directory account and an azure subscription is av
    - triggerd by [gollum](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#gollum) trigger
    - checks out wiki to docs folder
    - installs [mkdocs](https://www.mkdocs.org/)
-   - TODO: writes [mkdocs config](https://www.mkdocs.org/user-guide/configuration/) to `mkdocs.yml`
-   - TODO: builds site using mkdocs
+   - writes [mkdocs config](https://www.mkdocs.org/user-guide/configuration/) to `mkdocs.yml`
+   - formats filename as title and add to frontmatter to match github behaviour
+   - renames home.md to index.md to make it the landing page under mkdocs
+   - builds site using mkdocs
    - TODO: runs publish to static site
 - TODO: infra deploy workflow [.github/workflows/deploy-azure-template.yml]
 

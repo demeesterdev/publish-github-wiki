@@ -12,13 +12,50 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ${{github.repository}}.wiki
-          path: 'wiki'
-      - name: install mkdocs
+          path: 'docs'
+      - name: install mkdocs and plugins
         run:  |
-          pip install mkdocs
-      - name: check wiki repo content
+          pip install mkdocs mkdocs-exclude
+      - name: write mkdocs config
+        env:
+          CONFIG_FILE: mkdocs.yml
+          SITE_NAME: ${{github.repository}} wiki
+          REPO_URL: https://github.com/${{github.repository}}/wiki
         run: |
-          ls ./wiki -al
+          touch "$CONFIG_FILE"
+          echo "site_name: $SITE_NAME"   >> "$CONFIG_FILE"
+          echo "repo_url: $REPO_URL"     >> "$CONFIG_FILE"
+          echo "edit_uri: ''"            >> "$CONFIG_FILE"
+
+          # setup theme
+          echo "theme:"                  >> "$CONFIG_FILE"
+          echo "  name: readthedocs"     >> "$CONFIG_FILE"
+
+          # setup plugins
+          echo "plugins:"                >> "$CONFIG_FILE"
+          echo "  - exclude:"            >> "$CONFIG_FILE"
+          echo "      glob: "            >> "$CONFIG_FILE"
+          echo '        - "_Footer.md"'  >> "$CONFIG_FILE"
+          echo '        - "_Sidebar.md"' >> "$CONFIG_FILE"
+      - name: add page title to content
+        run: |
+          for file in $(find ./docs/ -name '*.md')
+          do
+            filename=$(basename -- "$file")
+            title=$(echo "${filename%.*}" | tr '-' ' ')
+            echo "filename $filename -> $title"   
+
+            echo -e "Title: $title\n\n$(cat $file)" > "$file"
+          done
+      - name: rename home to index
+        run:  |
+          if [[ ! -f ./docs/index.md ]]; then 
+            find ./docs/ -maxdepth 1 -iname home.md -exec mv {} ./docs/index.md \;
+          fi
+      - name: build site
+        run: makedocs build
+        
+        
       
 #      - name: Build And Deploy
 #        id: builddeploy
