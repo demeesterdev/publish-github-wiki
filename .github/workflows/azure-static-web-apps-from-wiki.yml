@@ -118,8 +118,53 @@ jobs:
       - name: build site
         run: mkdocs build
       - name: write statice web app config
-        run: |
-          echo "TODO: implement writing of config for static web app"
+        uses: DamianReeves/write-file-action@master
+        with:
+          write-mode: overwrite
+          path: site/staticwebapp.config.json
+          contents: |
+            {
+              "auth": {
+                "identityProviders": {
+                  "azureActiveDirectory": {
+                    "registration": {
+                      "openIdIssuer": "https://login.microsoftonline.com/${{ secrets.AZUREAD_TENANT_ID }}",
+                      "clientIdSettingName": "AZUREAD_CLIENT_ID",
+                      "clientSecretSettingName": "AZUREAD_CLIENT_SECRET"
+                    }
+                  }
+                }
+              },
+              "responseOverrides": {
+                "401": {
+                  "statusCode": 302,
+                  "redirect": "/login"
+                },
+                "404": {
+                  "rewrite": "/",
+                  "statusCode": 404
+                }
+              },
+              "routes":[
+                {
+                  "route": "/login",
+                  "allowedRoles": ["anonymous"],
+                  "rewrite": "/.auth/login/github"
+                },    
+                {
+                  "route": "/.auth/*",
+                  "allowedRoles": ["anonymous"]
+                },
+                {
+                  "route": "/logout",
+                  "redirect": "/.auth/logout"
+                },
+                {
+                  "route": "/*",
+                  "allowedRoles": ["authenticated"]
+                }
+              ]
+            }
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
