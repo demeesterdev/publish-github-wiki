@@ -113,7 +113,7 @@ jobs:
           for file in $(find ./docs/ -name '*.md')
           do
              # replace '[linkname](homepagefile)' with '[linkname](index)'
-             sed -i "s/]($homepagelink)/](index)/g" $file
+             sed -i "s/]($homepagelink)/](index.md)/g" $file
           done
       - name: build site
         run: mkdocs build
