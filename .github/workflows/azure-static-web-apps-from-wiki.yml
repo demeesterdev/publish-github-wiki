@@ -16,31 +16,55 @@ jobs:
       - name: install mkdocs and plugins
         run:  |
           pip install mkdocs mkdocs-exclude
-      - name: write mkdocs config
+      - name: parse file tags
+        run: |
+          excludeFromPublish=''
+          for file in $(find ./docs/ -name "*.md")
+          do
+            wikiFilePath=$(realpath --relative-to ./docs "$file")
+
+            # check if file has config tag
+            if [ "$(sed -n -e '1{/<\!-- hasConfig -->/p}' "$file")" ]; then
+              echo "::notice:: found tag <\!-- hasConfig --> on wiki file $wikiFilePath"
+              configfile=$file
+            fi
+
+            #check if file has do not publish tag
+            if [ "$(sed -n -e '1{/<\!-- doNotPublish -->/p}' "$file")" ]; then
+              echo "::notice:: found tag <\!-- doNotPublish --> on wiki file $wikiFilePath" 
+              excludeFromPublish="$excludeFromPublish:$wikiFilePath"
+            fi
+          done  
+
+          echo "EXCLUDE_GLOBS=${excludeFromPublish:1}" >> $GITHUB_ENV
+          echo "CONFIG_SOURCE_FILE=$configfile" >> $GITHUB_ENV
+      - name: build mkdocs config
         env:
+          BASE_CONFIG_FILE: base.yml
           CONFIG_FILE: mkdocs.yml
-          SITE_NAME: ${{github.repository}} wiki
-          SITE_URL: https://example-published-github-wiki.demeester.app/
           REPO_URL: https://github.com/${{github.repository}}/wiki
         run: |
-          touch "$CONFIG_FILE"
-          echo "site_name: $SITE_NAME"   >> "$CONFIG_FILE"
-          echo "site_url: $SITE_URL"     >> "$CONFIG_FILE"
-          echo "repo_url: $REPO_URL"     >> "$CONFIG_FILE"
-          echo "edit_uri: ''"            >> "$CONFIG_FILE"
+          # read config from config source file in wiki
+          sed -n '/^```mkdocs.yml/,/^```/p' "$CONFIG_SOURCE_FILE" |
+          sed '/^```/d' > "$BASE_CONFIG_FILE"
 
-          # setup theme
-          echo "theme:"                  >> "$CONFIG_FILE"
-          echo "  name: readthedocs"     >> "$CONFIG_FILE"
+          # build extended mkdocs config for publishing
+          echo ''                             >  "$CONFIG_FILE"
 
-          # setup plugins
-          echo "plugins:"                >> "$CONFIG_FILE"
-          echo "  - exclude:"            >> "$CONFIG_FILE"
-          echo "      glob: "            >> "$CONFIG_FILE"
-          echo '        - "_Footer.md"'  >> "$CONFIG_FILE"
-          echo '        - "_Sidebar.md"' >> "$CONFIG_FILE"
-          
-          echo "  - search"              >> "$CONFIG_FILE"
+          #inherit from parsed config
+          echo "INHERIT: ./$BASE_CONFIG_FILE" >> "$CONFIG_FILE"
+          echo "repo_url: $REPO_URL"          >> "$CONFIG_FILE"
+          echo "edit_uri: ''"                 >> "$CONFIG_FILE"
+
+          # add files to exclude from deployment
+          echo "plugins:"                     >> "$CONFIG_FILE"
+          echo "  - exclude:"                 >> "$CONFIG_FILE"
+          echo "      glob: "                 >> "$CONFIG_FILE"
+
+          IFS=':' read -ra GLOBS <<< "$EXCLUDE_GLOBS"
+          for glob in "${GLOBS[@]}"; do 
+            echo "        - \"$glob\""  >> "$CONFIG_FILE"
+          done
       - name: add page title to content
         run: |
           for file in $(find ./docs/ -name '*.md')
@@ -51,14 +75,25 @@ jobs:
 
             echo -e "Title: $title\n\n$(cat $file)" > "$file"
           done
-      - name: rename home to index
+      - name: rename homepage to index.md
         run:  |
+          homepage=$(sed -n '/^```homepage/,/^```/p' "$CONFIG_SOURCE_FILE" | sed '/^```/d')
           if [[ ! -f ./docs/index.md ]]; then 
-            find ./docs/ -maxdepth 1 -iname home.md -exec mv {} ./docs/index.md \;
+            find ./docs/ -maxdepth 1 -iname "$homepage" -exec mv {} ./docs/index.md \;
           fi
+      - name: replace links to homepage with index.md
+        run: |
+          homepage=$(sed -n '/^```homepage/,/^```/p' "$CONFIG_SOURCE_FILE" | sed '/^```/d')
+          regex="${homepage//\//\\\/}"
+          regex="${regex//\./\\\.}"
+          
+          for file in $(find ./docs/ -name '*.md')
+          do
+             # replace '[linkname](homepagefile)' with '[linkname](index.md)'
+             sed -i "s/]($regex)/](index.md)/g" $file
+          done
       - name: build site
         run: mkdocs build
-      
       - name: write statice web app config
         run: |
           echo "TODO: implement writing of config for static web app"
